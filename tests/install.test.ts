@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtemp, mkdir, writeFile, readFile, stat } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, stat, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 
 test('installer handles missing and partial worlds, preserves permissions and reuses credentials', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'cortico-stardew-install-'));
+  const root = await mkdtemp(join(await realpath(tmpdir()), 'cortico-stardew-install-'));
   const game = join(root, 'game with spaces');
   await mkdir(join(game, 'Mods'), { recursive: true });
   await mkdir(join(game, 'Mods', 'Example Mod'));
@@ -39,3 +39,4 @@ test('installer handles missing and partial worlds, preserves permissions and re
     assert.equal(client.modsDir, join(runtime, 'Mods'));
   }
 });
+
