@@ -50,12 +50,19 @@ export class StardewBridge {
 
   async start(port: number): Promise<number> {
     if (this.server) throw new Error('桥接已启动。');
-    this.server = createServer(socket => this.accept(socket));
-    await new Promise<void>((resolve, reject) => {
-      this.server!.once('error', reject);
-      this.server!.listen(port, '127.0.0.1', () => { this.server!.off('error', reject); resolve(); });
-    });
-    return (this.server.address() as { port: number }).port;
+    const server = createServer(socket => this.accept(socket));
+    this.server = server;
+    try {
+      await new Promise<void>((resolve, reject) => {
+        server.once('error', reject);
+        server.listen(port, '127.0.0.1', () => { server.off('error', reject); resolve(); });
+      });
+      return (server.address() as { port: number }).port;
+    } catch (error) {
+      this.server = undefined;
+      server.close();
+      throw error;
+    }
   }
 
   async stop(): Promise<void> {
@@ -121,10 +128,10 @@ export class StardewBridge {
     });
     socket.on('data', chunk => {
       buffer += chunk;
-      if (buffer.length > 262144) { socket.destroy(); return; }
       while (buffer.includes('\n')) {
         const index = buffer.indexOf('\n');
         const line = buffer.slice(0, index); buffer = buffer.slice(index + 1);
+        if (Buffer.byteLength(line, 'utf8') > 262144) { socket.destroy(); return; }
         try {
           const message = JSON.parse(line);
           if (!authenticated) {
@@ -148,6 +155,9 @@ export class StardewBridge {
           this.onState(state, message.type === 'result');
         } catch { socket.destroy(); return; }
       }
+      // TCP can coalesce multiple valid frames into one data event. Limit each
+      // frame (including an unfinished one), not the size of the whole batch.
+      if (Buffer.byteLength(buffer, 'utf8') > 262144) socket.destroy();
     });
   }
 }

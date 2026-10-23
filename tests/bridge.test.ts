@@ -162,11 +162,28 @@ test('AbortSignal sends matching cancellation and awaits the stable receipt', as
   assert.equal((await result).status, 'cancelled');
 });
 test('malformed and oversized frames close the bridge', async t => {
-  for (const payload of ['not-json\n', 'x'.repeat(262145)]) {
+  for (const payload of ['not-json\n', 'x'.repeat(262145), JSON.stringify({ type: 'state', state: { ...state(), text: '中'.repeat(90000) } }) + '\n']) {
     const { bridge, game } = await setup(t);
     game.socket.write(payload);
     await until(() => bridge.state === null);
   }
+});
+
+test('failed listen can be retried on the same bridge', async t => {
+  const { port } = await setup(t);
+  const bridge = new StardewBridge(token, () => {});
+  t.after(() => bridge.stop());
+  await assert.rejects(bridge.start(port), { code: 'EADDRINUSE' });
+  assert.ok(await bridge.start(0) > 0);
+});
+
+test('coalesced valid frames are bounded separately', async t => {
+  const { bridge } = await setup(t);
+  const first = JSON.stringify({ type: 'state', state: { ...state('batch:1'), text: 'x'.repeat(150000) } }) + '\n';
+  const second = JSON.stringify({ type: 'state', state: { ...state('batch:2'), text: 'x'.repeat(150000) } }) + '\n';
+  // A single data event is allowed to contain several complete protocol frames.
+  (bridge as any).socket.emit('data', first + second);
+  assert.equal(bridge.state?.version, 'batch:2');
 });
 test('World checks live permissions and pause, publishes post-action state, cancels on permission withdrawal', async t => {
   const cfg = { ...STARDEW_DEFAULTS, bridgePort: 0, allowActions: false };

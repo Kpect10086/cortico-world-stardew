@@ -2,7 +2,7 @@ Owner: `src/definition.ts`, `src/world.ts`, `smapi/ModEntry.cs`, `scripts/instal
 
 # 星露谷联机 World
 
-Cortico 使用独立的 SMAPI 客户端作为农场工，加入用户主持的农场。首版面向 Windows、星露谷 1.6.15、SMAPI 4.5.2、Cortico World API 6。插件不修改存档格式，不生成物品、金钱或体力。
+Cortico 使用独立的 SMAPI 客户端作为农场工，加入用户主持的农场。平台入口支持 Windows 和 Linux 桌面，游戏接口基于星露谷 1.6.15、SMAPI 4.5.2、Cortico World API 6。安装与启动脚本需要 PowerShell 7（`pwsh`）。插件不修改存档格式，不生成物品、金钱或体力。
 
 支持附近地图与碰撞格、农作物、物品、玩家、体力、背包和当前菜单的观察；支持游戏原生寻路、朝向、选物品、工具使用/种植、原生交互、菜单按钮和按键。Cortico 负责决定分工和策略。首版不提供自动钓鱼反应控制，也不保证处理所有特殊活动和第三方 Mod 菜单。
 
@@ -19,6 +19,18 @@ Cortico 使用独立的 SMAPI 客户端作为农场工，加入用户主持的�
 出售默认关闭，需要开启“允许保留库存后出售普通收获物”。到普通出货箱旁 `interact`，看到 `menu.shipping=true` 后用 `ship(slot,count)`；每次最多99个，实际数量不得超过物品 `shippingMax`。只允许普通品质、基础单价≤300的蔬菜/水果/花，每叠保留至少5个，任务、特殊、配方及带Mod数据的物品禁止出售。种子、工具、材料、鱼和其他类别不在自动出售范围。普通菜单点击不能出售背包物品，出货箱前的工具调用也不能直接投物。此保护不覆盖用户自己的操作及第三方Mod自行执行的行为；不提供自动商店卖货或迷你出货箱出售。
 
 ## 安装
+
+Linux 使用已安装 SMAPI 的正版游戏目录，在本包目录执行：
+
+```sh
+pwsh -NoProfile -File scripts/install.ps1 \
+  -GameDir "/path/to/Stardew Valley" -DeploymentDir "/path/to/deployment"
+pwsh -NoProfile -File scripts/start-client.ps1
+```
+
+Linux 默认独立运行目录为 `${XDG_DATA_HOME:-$HOME/.local/share}/Cortico/Stardew`；两个命令都可用 `-RuntimeDir` 覆盖。安装器以符号链接继承现有 Mods，桥接 Mod 单独保存配置；凭据文件设置为仅当前用户可读写。启动使用 SMAPI 官方的 `StardewValley` 启动器，并通过 `SMAPI_MODS_PATH` 指定独立 Mods，避免 Unix 启动器丢失命令行参数。参见 [SMAPI 官方启动参数说明](https://github.com/Pathoschild/SMAPI/blob/develop/docs/technical/smapi.md)。需正常图形桌面与用户主持的联机农场。
+
+本次实测为 Windows 离线 TCP 测试、安装器临时目录测试、C# 传输往返与 TypeScript 检查。Linux 原生游戏、实际联机/种田及完整 SMAPI Mod 重编译尚未实测。仓库加入 Ubuntu / Windows、Node 22.22.2 / 24 的 CI 矩阵；完整游戏编译仍需游戏 DLL，不纳入无游戏资源的 CI。
 
 1. `pwsh -NoProfile -File scripts/install.ps1 -GameDir "<游戏目录>" -DeploymentDir "<Cortico部署目录>"` 安装专用 Mod 配置。游戏目录、部署目录和运行目录可以通过同名参数指定。
 2. Cortico 扩展页选择本机目录，填此包目录，安装后重启 Cortico。新扩展需要重新加载进程；只重启 World 不会加载新包。

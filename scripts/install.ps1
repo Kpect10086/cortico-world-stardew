@@ -1,14 +1,19 @@
 param(
     [Parameter(Mandatory = $true)][string]$GameDir,
     [Parameter(Mandatory = $true)][string]$DeploymentDir,
-    [string]$RuntimeDir = (Join-Path $env:LOCALAPPDATA 'Cortico\Stardew'),
+    [string]$RuntimeDir = '',
     [string]$CharacterName = ''
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'platform.ps1')
+if (-not $RuntimeDir) { $RuntimeDir = Get-StardewRuntimeDir }
+$GameDir = [IO.Path]::GetFullPath($GameDir)
+$DeploymentDir = [IO.Path]::GetFullPath($DeploymentDir)
+$RuntimeDir = [IO.Path]::GetFullPath($RuntimeDir)
 $packageDir = Split-Path -Parent $PSScriptRoot
-$running = Get-CimInstance Win32_Process -Filter "Name = 'StardewModdingAPI.exe'" | Where-Object { $_.CommandLine -and $_.CommandLine.Contains((Join-Path $RuntimeDir 'Mods')) }
+$running = Get-StardewClientProcesses (Join-Path $RuntimeDir 'Mods')
 if ($running) { throw '专用客户端正在运行；请关闭它后安装更新。' }
-if (-not (Test-Path -LiteralPath (Join-Path $GameDir 'StardewModdingAPI.exe'))) { throw '游戏目录中没有 SMAPI。' }
+Get-StardewLauncher $GameDir | Out-Null
 if (-not (Test-Path -LiteralPath (Join-Path $DeploymentDir 'config.json'))) { throw 'Cortico 部署目录无效。' }
 $dll = Join-Path $packageDir 'dist\smapi\CorticoStardew.dll'
 if (-not (Test-Path -LiteralPath $dll)) {
@@ -26,16 +31,24 @@ foreach ($mod in Get-ChildItem -LiteralPath (Join-Path $GameDir 'Mods') -Directo
     $target = Join-Path $modsDir $mod.Name
     if (Test-Path -LiteralPath $target) {
         $existing = Get-Item -LiteralPath $target
-        if ($existing.LinkType -ne 'Junction' -or $existing.Target -ne $mod.FullName) { throw "已有不同的 Mod 目录，未覆盖：$target" }
+        if ($existing.LinkType -notin @('Junction', 'SymbolicLink') -or [IO.Path]::GetFullPath($existing.Target) -ne $mod.FullName) { throw "已有不同的 Mod 目录，未覆盖：$target" }
     } else {
-        New-Item -ItemType Junction -Path $target -Target $mod.FullName | Out-Null
+        $linkType = if ($windowsPlatform) { 'Junction' } else { 'SymbolicLink' }
+        New-Item -ItemType $linkType -Path $target -Target $mod.FullName | Out-Null
     }
 }
 $settingsPath = Join-Path $DeploymentDir 'config.json'
 $settings = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json -AsHashtable
+if ($null -eq $settings.worlds) { $settings.worlds = @{} }
+if ($settings.worlds -isnot [System.Collections.IDictionary]) { throw '配置 worlds 必须为对象。' }
 $config = $settings.worlds.stardew
 $configChanged = -not $settings.worlds.ContainsKey('stardew')
-if (-not $config) { $config = @{ enabled = $true; allowActions = $true; bridgePort = 24983; wakeIntervalSec = 30; characterName = 'bot' } }
+if ($null -eq $config) { $config = @{}; $configChanged = $true }
+if ($config -isnot [System.Collections.IDictionary]) { throw '配置 worlds.stardew 必须为对象。' }
+$defaults = @{ enabled = $true; allowActions = $true; allowShipping = $false; bridgePort = 24983; wakeIntervalSec = 30; characterName = 'bot' }
+foreach ($key in $defaults.Keys) {
+    if (-not $config.Contains($key)) { $config[$key] = $defaults[$key]; $configChanged = $true }
+}
 if ($CharacterName) {
     if ($CharacterName.Trim().Length -lt 1 -or $CharacterName.Trim().Length -gt 20 -or $CharacterName -match '[\[\]\x00-\x1f\x7f]') { throw '农场工名字无效。' }
     if ($config.characterName -cne $CharacterName.Trim()) { $config.characterName = $CharacterName.Trim(); $configChanged = $true }
@@ -60,6 +73,12 @@ if (Test-Path -LiteralPath $modConfigPath) {
     }
 }
 @{ Port = [int]$config.bridgePort; Token = $credentials.token } | ConvertTo-Json | Set-Content -LiteralPath $modConfigPath -Encoding utf8
+if (-not $windowsPlatform) {
+    & chmod 700 $dataDir $modDir
+    if ($LASTEXITCODE -ne 0) { throw '无法设置桥接凭据目录权限。' }
+    & chmod 600 $credentialsPath $modConfigPath
+    if ($LASTEXITCODE -ne 0) { throw '无法设置桥接凭据文件权限。' }
+}
 @{ gameDir = $GameDir; deploymentDir = $DeploymentDir; runtimeDir = $RuntimeDir; modsDir = $modsDir; bridgePort = [int]$config.bridgePort; characterName = $(if($config.characterName) { $config.characterName } else { 'bot' }) } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $RuntimeDir 'client.json') -Encoding utf8
 if ($configChanged) {
     Copy-Item -LiteralPath $settingsPath -Destination (Join-Path $dataDir "config.before-stardew-$(Get-Date -Format yyyyMMdd-HHmmss).json")

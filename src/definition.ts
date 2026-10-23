@@ -10,9 +10,9 @@ export const STARDEW: WorldDefinition<StardewConfigSection> = {
   create(ctx) {
     const directory = join(ctx.botDir, 'data', 'stardew');
     const path = join(directory, 'bridge.json');
-    mkdirSync(directory, { recursive: true });
-    if (!existsSync(path)) writeFileSync(path, JSON.stringify({ token: randomBytes(32).toString('hex') }), { flag: 'wx' });
-    const { token } = JSON.parse(readFileSync(path, 'utf8'));
+    mkdirSync(directory, { recursive: true, mode: 0o700 });
+    if (!existsSync(path)) writeFileSync(path, JSON.stringify({ token: randomBytes(32).toString('hex') }), { flag: 'wx', mode: 0o600 });
+    const { token } = JSON.parse(readFileSync(path, 'utf8').replace(/^\uFEFF/, ''));
     if (typeof token !== 'string' || token.length < 32) throw new Error('星露谷桥接凭据无效，请检查部署 data/stardew/bridge.json。');
     return new StardewWorld(ctx.cfg, ctx.timezone, token);
   },
