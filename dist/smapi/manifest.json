@@ -1,0 +1,11 @@
+{
+  "Name": "Cortico Stardew Farmhand",
+  "Author": "Local",
+  "Version": "0.1.3",
+  "Description": "通过本机桥接控制独立联机客机角色。仅用于专用客户端。",
+  "UniqueID": "Local.CorticoStardew",
+  "EntryDll": "CorticoStardew.dll",
+  "MinimumApiVersion": "4.5.2",
+  "UpdateKeys": []
+}
+

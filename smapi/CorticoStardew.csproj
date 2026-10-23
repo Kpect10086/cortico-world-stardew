@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <GameDir Condition="'$(GameDir)' == ''"></GameDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Stardew Valley"><HintPath>$(GameDir)/Stardew Valley.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="StardewModdingAPI"><HintPath>$(GameDir)/StardewModdingAPI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="MonoGame.Framework"><HintPath>$(GameDir)/MonoGame.Framework.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="xTile"><HintPath>$(GameDir)/xTile.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="StardewValley.GameData"><HintPath>$(GameDir)/StardewValley.GameData.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

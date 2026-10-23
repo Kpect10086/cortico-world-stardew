@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
+  <ItemGroup><Compile Include="../../smapi/ChestAccess.cs" Link="ChestAccess.cs" /></ItemGroup>
+  <ItemGroup><Compile Include="../../smapi/Transport.cs" Link="Transport.cs" /><Compile Include="../../smapi/JoinProfile.cs" Link="JoinProfile.cs" /><Compile Include="../../smapi/StateRevision.cs" Link="StateRevision.cs" /><Compile Include="../../smapi/ShippingPolicy.cs" Link="ShippingPolicy.cs" /><Compile Include="../../smapi/ChestColor.cs" Link="ChestColor.cs" /></ItemGroup>
+</Project>

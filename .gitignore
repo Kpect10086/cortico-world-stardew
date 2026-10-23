@@ -1,0 +1,15 @@
+node_modules/
+.git/
+fixture-data/
+.env
+.env.*
+.npmrc
+*.tgz
+*.log
+*.db*
+*.sqlite*
+coverage/
+smapi/bin/
+smapi/obj/
+tests/dotnet/bin/
+tests/dotnet/obj/

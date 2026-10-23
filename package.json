@@ -1,0 +1,69 @@
+{
+  "name": "cortico-world-stardew",
+  "version": "0.1.3",
+  "type": "module",
+  "description": "星露谷独立农场角色联机 World，通过本机 SMAPI 桥接观察和操作。",
+  "license": "MIT",
+  "main": "./src/index.ts",
+  "keywords": [
+    "cortico-world",
+    "stardew-valley"
+  ],
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "os": [
+    "win32"
+  ],
+  "cortico": {
+    "kind": "world",
+    "api": 6,
+    "displayName": "星露谷联机",
+    "tags": [
+      "game",
+      "external-setup",
+      "experimental",
+      "high-cost"
+    ],
+    "describe": "describe.json"
+  },
+  "files": [
+    "src",
+    "smapi/*.cs",
+    "smapi/*.csproj",
+    "smapi/manifest.json",
+    "dist/smapi",
+    "scripts",
+    "README.md",
+    "CHANGELOG.md",
+    "describe.json",
+    "tsconfig.json",
+    "LICENSE",
+    "tests/*.ts",
+    "tests/dotnet/*.cs",
+    "tests/dotnet/*.csproj"
+  ],
+  "scripts": {
+    "test": "node --import tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "cortico": "0.2.6",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  },
+  "author": "Kpect10086",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kpect10086/cortico-world-stardew.git"
+  },
+  "homepage": "https://github.com/Kpect10086/cortico-world-stardew#readme",
+  "bugs": {
+    "url": "https://github.com/Kpect10086/cortico-world-stardew/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
+}
